@@ -33,6 +33,14 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.stormpath.blog</groupId>
+            <artifactId>spring-mvc-rest-exhandler</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -48,7 +56,6 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
         </dependency>
-
     </dependencies>
 
     <build>

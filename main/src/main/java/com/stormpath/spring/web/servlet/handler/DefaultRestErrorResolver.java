@@ -239,10 +239,6 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
         if (values == null || values.length == 0) {
             throw new IllegalStateException("Invalid config mapping.  Exception names must map to a string configuration.");
         }
-        if (values.length > 2) {
-            throw new IllegalStateException("Invalid config mapping.  Mapped values must not contain more than 2 " +
-                    "values (code=y, msg=z)");
-        }
 
         RestError.Builder builder = new RestError.Builder();
 
@@ -304,6 +300,11 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
                         codeSet = true;
                         continue;
                     }
+                }
+                if (!moreInfoSet && trimmedVal.toLowerCase().startsWith("http")) {
+                    builder.setMoreInfoUrl(trimmedVal);
+                    moreInfoSet = true;
+                    continue;
                 }
                 if (!msgSet) {
                     builder.setMessage(trimmedVal);

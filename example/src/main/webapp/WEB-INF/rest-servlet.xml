@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc
+                           http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <context:component-scan base-package="com.stormpath.blog.spring.mvc.rest.exhandler"/>
+
+    <mvc:annotation-driven>
+        <mvc:message-converters>
+            <bean class="com.stormpath.blog.spring.http.converter.json.DefaultJacksonHttpMessageConverter">
+                <property name="prettyPrint" value="true"/>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+    <mvc:interceptors>
+        <bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+            <property name="paramName" value="lang"/>
+        </bean>
+    </mvc:interceptors>
+    <bean id="localeResolver" class="org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver"/>
+
+    <!-- Unfortunately we have to repeat an instance of this class here because the mvc:message-converters element above
+         does not support <ref/> elements: -->
+    <bean id="jacksonHttpMessageConverter" class="com.stormpath.blog.spring.http.converter.json.DefaultJacksonHttpMessageConverter">
+        <property name="prettyPrint" value="true"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+        <property name="order" value="1"/>
+        <property name="mediaTypes">
+            <map>
+                <entry key="json" value="application/json"/>
+            </map>
+        </property>
+        <property name="defaultContentType" value="#{T(org.springframework.http.MediaType).APPLICATION_JSON}"/>
+        <property name="defaultViews">
+            <list>
+                <bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView"/>
+            </list>
+        </property>
+    </bean>
+
+    <!-- Allow Exceptions to be handled in annotated methods if desired.  Otherwise fallback to the
+         'applicationDefaultHandlerExceptionResolver' below: -->
+    <bean id="annotationMethodHandlerExceptionResolver"
+          class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerExceptionResolver">
+        <property name="order" value="0"/>
+    </bean>
+    <bean id="applicationDefaultHandlerExceptionResolver"
+          class="com.stormpath.spring.web.servlet.handler.RestExceptionHandler">
+        <property name="order" value="100"/>
+        <property name="messageConverters">
+            <list>
+                <ref bean="jacksonHttpMessageConverter"/>
+            </list>
+        </property>
+        <property name="errorResolver">
+            <bean class="com.stormpath.spring.web.servlet.handler.DefaultRestErrorResolver">
+                <property name="localeResolver" ref="localeResolver"/>
+                <property name="exceptionMappingDefinitions">
+                    <map>
+                        <!-- 400 -->
+                        <entry key="IllegalArgumentException" value="400, _exmsg"/>
+                        <entry key="AuthenticationException" value="400"/>
+                        <entry key="org.springframework.http.converter.HttpMessageNotReadableException" value="400, _exmsg"/>
+                        <entry key="org.springframework.web.bind.MissingServletRequestParameterException" value="400, _exmsg"/>
+                        <entry key="org.springframework.beans.TypeMismatchException" value="400, _exmsg"/>
+                        <entry key="javax.validation.ValidationException" value="400, _exmsg"/>
+
+                        <!-- 403 -->
+                        <entry key="AuthorizationException" value="403"/>
+
+                        <!-- 404 -->
+                        <entry key="com.stormpath.blog.spring.mvc.rest.exhandler.UnknownEntityException" value="404, _exmsg"/>
+                        <entry key="org.hibernate.ObjectNotFoundException" value="404, The requested resource does not exist."/>
+                        <entry key="org.springframework.web.servlet.mvc.multiaction.NoSuchRequestHandlingMethodException" value="404, _exmsg"/>
+
+                        <!-- 405 -->
+                        <entry key="org.springframework.web.HttpRequestMethodNotSupportedException" value="405, _exmsg"/>
+
+                        <!-- 406 -->
+                        <entry key="org.springframework.web.HttpMediaTypeNotAcceptableException" value="406, _exmsg"/>
+
+                        <!-- 409 (Conflict): Data integrity constraint violations: -->
+                        <entry key="org.springframework.dao.DataIntegrityViolationException" value="409, _exmsg"/>
+
+                        <!-- 415 -->
+                        <entry key="org.springframework.web.HttpMediaTypeNotSupportedException" value="415, _exmsg"/>
+
+                        <!-- 500 (catch all): -->
+                        <entry key="Throwable" value="500"/>
+                    </map>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+</beans>
