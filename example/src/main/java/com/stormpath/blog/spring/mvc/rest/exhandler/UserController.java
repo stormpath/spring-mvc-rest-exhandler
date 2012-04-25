@@ -27,9 +27,9 @@ public class UserController {
      *
      * @param username the username for the user to lookup.  Supports only 'jsmith' and 'djones' for testing.
      * @return the associated user
-     * @throws UnknownEntityException if there is no user with the specified username.
+     * @throws UnknownResourceException if there is no user with the specified username.
      */
-    private User findUser(String username) throws UnknownEntityException {
+    private User findUser(String username) throws UnknownResourceException {
         if (!StringUtils.hasText(username)) {
             throw new IllegalArgumentException("Username is required.");
         }
@@ -43,7 +43,7 @@ public class UserController {
         }
 
         //any other lookup throws an exception (not found):
-        throw new UnknownEntityException("Unable to find user with username '" + username + "'");
+        throw new UnknownResourceException("Unable to find user with username '" + username + "'");
     }
 
 

@@ -11,15 +11,7 @@ public class User {
     public User(){}
 
     public User(String name, String username) {
-        this.name = name;
-        this.username = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
+        this.username = username;
         this.name = name;
     }
 
@@ -29,5 +21,13 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

@@ -25,10 +25,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.LocaleResolver;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.*;
 
 /**
  * Default {@code RestErrorResolver} implementation that converts discovered Exceptions to
@@ -39,6 +38,7 @@ import java.util.Map;
 public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourceAware, InitializingBean {
 
     public static final String DEFAULT_EXCEPTION_MESSAGE_VALUE = "_exmsg";
+    public static final String DEFAULT_MESSAGE_VALUE = "_msg";
 
     private static final Logger log = LoggerFactory.getLogger(DefaultRestErrorResolver.class);
 
@@ -51,9 +51,11 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
 
     private String defaultMoreInfoUrl;
     private boolean defaultEmptyCodeToStatus;
+    private String defaultDeveloperMessage;
 
     public DefaultRestErrorResolver() {
         this.defaultEmptyCodeToStatus = true;
+        this.defaultDeveloperMessage = DEFAULT_EXCEPTION_MESSAGE_VALUE;
     }
 
     public void setMessageSource(MessageSource messageSource) {
@@ -74,6 +76,10 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
 
     public void setDefaultEmptyCodeToStatus(boolean defaultEmptyCodeToStatus) {
         this.defaultEmptyCodeToStatus = defaultEmptyCodeToStatus;
+    }
+
+    public void setDefaultDeveloperMessage(String defaultDeveloperMessage) {
+        this.defaultDeveloperMessage = defaultDeveloperMessage;
     }
 
     @Override
@@ -132,7 +138,14 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
     }
 
     protected String getDeveloperMessage(RestError template, ServletWebRequest request, Exception ex) {
-        return getMessage(template.getDeveloperMessage(), request, ex);
+        String devMsg = template.getDeveloperMessage();
+        if (devMsg == null && defaultDeveloperMessage != null) {
+            devMsg = defaultDeveloperMessage;
+        }
+        if (DEFAULT_MESSAGE_VALUE.equals(devMsg)) {
+            devMsg = template.getMessage();
+        }
+        return getMessage(devMsg, request, ex);
     }
 
     /**
@@ -217,7 +230,7 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
     }
 
 
-    private static Map<String, RestError> toRestErrors(Map<String, String> smap) {
+    protected Map<String, RestError> toRestErrors(Map<String, String> smap) {
         if (CollectionUtils.isEmpty(smap)) {
             return Collections.emptyMap();
         }
@@ -234,7 +247,7 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
         return map;
     }
 
-    private static RestError toRestError(String exceptionConfig) {
+    protected RestError toRestError(String exceptionConfig) {
         String[] values = StringUtils.commaDelimitedListToStringArray(exceptionConfig);
         if (values == null || values.length == 0) {
             throw new IllegalStateException("Invalid config mapping.  Exception names must map to a string configuration.");

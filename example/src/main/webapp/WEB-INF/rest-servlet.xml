@@ -64,6 +64,7 @@
         <property name="errorResolver">
             <bean class="com.stormpath.spring.web.servlet.handler.DefaultRestErrorResolver">
                 <property name="localeResolver" ref="localeResolver"/>
+                <property name="defaultMoreInfoUrl" value="mailto:support@mycompany.com"/>
                 <property name="exceptionMappingDefinitions">
                     <map>
                         <!-- 400 -->
@@ -78,7 +79,7 @@
                         <entry key="AuthorizationException" value="403"/>
 
                         <!-- 404 -->
-                        <entry key="com.stormpath.blog.spring.mvc.rest.exhandler.UnknownEntityException" value="404, _exmsg"/>
+                        <entry key="com.stormpath.blog.spring.mvc.rest.exhandler.UnknownResourceException" value="404, _exmsg"/>
                         <entry key="org.hibernate.ObjectNotFoundException" value="404, The requested resource does not exist."/>
                         <entry key="org.springframework.web.servlet.mvc.multiaction.NoSuchRequestHandlingMethodException" value="404, _exmsg"/>
 

@@ -60,6 +60,7 @@ public class RestExceptionHandler extends AbstractHandlerExceptionResolver imple
 
     public RestExceptionHandler() {
         this.errorResolver = new DefaultRestErrorResolver();
+        this.errorConverter = new MapRestErrorConverter();
     }
 
     public void setMessageConverters(HttpMessageConverter<?>[] messageConverters) {
