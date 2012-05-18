@@ -19,9 +19,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
- * Replaces Spring's {@link org.springframework.http.converter.json.MappingJacksonHttpMessageConverter}, which is not
- * very configurable out of the box.  This implementation offers more configuration options w/ better OO access
- * (getters/setters), and supports 'pretty printing'.
+ * Replaces Spring's {@link org.springframework.http.converter.json.MappingJacksonHttpMessageConverter}, which is
+ * difficult to configure for pretty-printing.  This implementation enables pretty-printing easily via a setter/getter.
  * <p/>
  * See <a href="http://stackoverflow.com/questions/6541757/when-using-spring-mvc-for-rest-how-do-you-enable-jackson-to-pretty-print-render">
  *     When using Spring MVC for REST, how do you enable Jackson to pretty-print rendered JSON?</a> and the latest

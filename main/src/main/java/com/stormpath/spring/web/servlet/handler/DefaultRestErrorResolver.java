@@ -17,16 +17,22 @@ package com.stormpath.spring.web.servlet.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceAware;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.mvc.multiaction.NoSuchRequestHandlingMethodException;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.*;
 
 /**
@@ -84,7 +90,58 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.exceptionMappings = toRestErrors(this.exceptionMappingDefinitions);
+
+        //populate with some defaults:
+        Map<String, String> definitions = createDefaultExceptionMappingDefinitions();
+
+        //add in user-specified mappings (will override defaults as necessary):
+        if (this.exceptionMappingDefinitions != null && !this.exceptionMappingDefinitions.isEmpty()) {
+            definitions.putAll(this.exceptionMappingDefinitions);
+        }
+
+        this.exceptionMappings = toRestErrors(definitions);
+    }
+
+    protected final Map<String,String> createDefaultExceptionMappingDefinitions() {
+
+        Map<String,String> m = new LinkedHashMap<String, String>();
+
+        // 400
+        applyDef(m, HttpMessageNotReadableException.class, HttpStatus.BAD_REQUEST);
+        applyDef(m, MissingServletRequestParameterException.class, HttpStatus.BAD_REQUEST);
+        applyDef(m, TypeMismatchException.class, HttpStatus.BAD_REQUEST);
+        applyDef(m, "javax.validation.ValidationException", HttpStatus.BAD_REQUEST);
+
+        // 404
+        applyDef(m, NoSuchRequestHandlingMethodException.class, HttpStatus.NOT_FOUND);
+        applyDef(m, "org.hibernate.ObjectNotFoundException", HttpStatus.NOT_FOUND);
+
+        // 405
+        applyDef(m, HttpRequestMethodNotSupportedException.class, HttpStatus.METHOD_NOT_ALLOWED);
+
+        // 406
+        applyDef(m, HttpMediaTypeNotAcceptableException.class, HttpStatus.NOT_ACCEPTABLE);
+
+        // 409
+        //can't use the class directly here as it may not be an available dependency:
+        applyDef(m, "org.springframework.dao.DataIntegrityViolationException", HttpStatus.CONFLICT);
+
+        // 415
+        applyDef(m, HttpMediaTypeNotSupportedException.class, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+
+        return m;
+    }
+
+    private void applyDef(Map<String,String> m, Class clazz, HttpStatus status) {
+        applyDef(m, clazz.getName(), status);
+    }
+
+    private void applyDef(Map<String,String> m, String key, HttpStatus status) {
+        m.put(key, definitionFor(status));
+    }
+
+    private String definitionFor(HttpStatus status) {
+        return status.value() + ", " + DEFAULT_EXCEPTION_MESSAGE_VALUE;
     }
 
     @Override
@@ -182,7 +239,7 @@ public class DefaultRestErrorResolver implements RestErrorResolver, MessageSourc
      * <p/>
      * The config-time template is used as the basis for the RestError constructed at runtime.
      * @param ex
-     * @return
+     * @return the template to use for the RestError instance to be constructed.
      */
     private RestError getRestErrorTemplate(Exception ex) {
         Map<String, RestError> mappings = this.exceptionMappings;
